@@ -1,0 +1,4 @@
+{
+  "rewrites": [{ "source": "/api/:path*", "destination": "https://haulsafe-api.onrender.com/api/:path*" }]
+}
+
