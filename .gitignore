@@ -2,12 +2,14 @@
 .env
 .env.*
 !.env.example
-.venv/
+.venv*/
 __pycache__/
 .pytest_cache/
 *.py[cod]
+db.sqlite3
 node_modules/
 dist/
 .vite/
+*.tsbuildinfo
 .vercel/
 
