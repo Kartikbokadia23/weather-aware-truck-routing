@@ -1,10 +1,11 @@
 import { CloudSun, Info, Layers3, ShieldCheck } from "lucide-react";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { planRoutes } from "./lib/api";
-import { MapView } from "./components/MapView";
 import { RouteCards } from "./components/RouteCards";
 import { RouteForm } from "./components/RouteForm";
 import type { PlanInput, PlanResponse } from "./types";
+
+const MapView = lazy(() => import("./components/MapView").then((module) => ({ default: module.MapView })));
 
 function App() {
   const [plan, setPlan] = useState<PlanResponse | null>(null);
@@ -52,7 +53,9 @@ function App() {
         <footer><span>Forecast data by Open-Meteo</span><span>Road data © OpenStreetMap</span></footer>
       </aside>
       <section className="map-panel">
-        <MapView plan={plan} selectedId={selectedId} heatmapHour={heatmapHour} onSelect={setSelectedId} />
+        <Suspense fallback={<div className="map-skeleton" aria-label="Loading map" />}>
+          <MapView plan={plan} selectedId={selectedId} heatmapHour={heatmapHour} onSelect={setSelectedId} />
+        </Suspense>
         {!plan && !loading && (
           <div className="map-empty"><span><CloudSun size={26} /></span><h2>Your weather corridor will appear here</h2><p>Enter a trip to compare three routes against forecast conditions.</p></div>
         )}

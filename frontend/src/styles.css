@@ -92,6 +92,7 @@ button { color: inherit; }
 .control-panel footer { display: flex; justify-content: space-between; padding: 18px 28px 30px; color: #8a938e; font-size: 9px; }
 .map-panel { position: relative; min-width: 0; height: 100vh; background: #e6e9e4; }
 .map { position: absolute; inset: 0; }
+.map-skeleton { position: absolute; inset: 0; background: #e6e9e4; }
 .maplibregl-ctrl-top-right { top: 15px; right: 15px; }
 .maplibregl-ctrl-group { overflow: hidden; border: 1px solid #d0d6d0; border-radius: 8px !important; box-shadow: 0 4px 16px rgba(30,45,38,.1) !important; }
 .maplibregl-popup-content { padding: 0 !important; border-radius: 8px !important; overflow: hidden; box-shadow: 0 8px 28px rgba(25,38,32,.2) !important; }

@@ -1,6 +1,7 @@
 import type { Place, PlanInput, PlanResponse } from "../types";
 
-const API_ROOT = import.meta.env.VITE_API_URL ?? "/api";
+const API_ROOT = import.meta.env.VITE_API_URL
+  ?? (import.meta.env.PROD ? "https://haulsafe-api.vercel.app/api" : "/api");
 
 async function decode<T>(response: Response): Promise<T> {
   const payload = await response.json().catch(() => ({}));

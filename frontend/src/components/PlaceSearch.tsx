@@ -20,7 +20,6 @@ export function PlaceSearch({ label, placeholder, value, onChange }: Props) {
 
   useEffect(() => {
     if (value || query.trim().length < 3) {
-      setResults([]);
       return;
     }
     const controller = new AbortController();
@@ -58,7 +57,7 @@ export function PlaceSearch({ label, placeholder, value, onChange }: Props) {
           autoComplete="off"
           onFocus={() => setFocused(true)}
           onBlur={() => window.setTimeout(() => setFocused(false), 150)}
-          onChange={(event) => { onChange(null); setQuery(event.target.value); }}
+          onChange={(event) => { onChange(null); setResults([]); setQuery(event.target.value); }}
         />
         {loading && <span className="spinner" aria-label="Searching" />}
         {(value || query) && !loading && (

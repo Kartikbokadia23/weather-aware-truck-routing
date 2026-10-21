@@ -16,8 +16,6 @@ const STYLE: maplibregl.StyleSpecification = {
 export function MapView({ plan, selectedId, heatmapHour, onSelect }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapInstance | null>(null);
-  const selectedRef = useRef(selectedId);
-  selectedRef.current = selectedId;
 
   useEffect(() => {
     if (!container.current || mapRef.current) return;
@@ -74,6 +72,9 @@ export function MapView({ plan, selectedId, heatmapHour, onSelect }: Props) {
       map.fitBounds(bounds, { padding: { top: 80, right: 60, bottom: 80, left: 60 }, duration: 900, maxZoom: 9 });
     };
     if (map.isStyleLoaded()) render(); else map.once("load", render);
+    // Map layers are created once per plan. The following effect handles
+    // interactive selection and forecast-hour updates without refitting bounds.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [plan]);
 
   useEffect(() => {

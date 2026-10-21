@@ -7,9 +7,17 @@ import { PlaceSearch } from "./PlaceSearch";
 type Props = { loading: boolean; onSubmit: (input: PlanInput) => void };
 
 export function RouteForm({ loading, onSubmit }: Props) {
+  const [departureBounds] = useState(() => {
+    const now = new Date();
+    return {
+      initial: localDateTime(new Date(now.getTime() + 60 * 60_000)),
+      min: localDateTime(now),
+      max: localDateTime(new Date(now.getTime() + 48 * 3600_000)),
+    };
+  });
   const [origin, setOrigin] = useState<Place | null>(null);
   const [destination, setDestination] = useState<Place | null>(null);
-  const [departure, setDeparture] = useState(localDateTime(new Date(Date.now() + 60 * 60_000)));
+  const [departure, setDeparture] = useState(departureBounds.initial);
   const [load, setLoad] = useState("34000");
   const [interval, setInterval] = useState<10 | 25 | 50>(25);
   const [error, setError] = useState("");
@@ -39,7 +47,7 @@ export function RouteForm({ loading, onSubmit }: Props) {
       <div className="form-grid">
         <label>
           <span className="field-label"><Clock3 size={14} /> Departure</span>
-          <input className="plain-input" type="datetime-local" min={localDateTime(new Date())} max={localDateTime(new Date(Date.now() + 48 * 3600_000))} value={departure} onChange={(e) => setDeparture(e.target.value)} required />
+          <input className="plain-input" type="datetime-local" min={departureBounds.min} max={departureBounds.max} value={departure} onChange={(e) => setDeparture(e.target.value)} required />
         </label>
         <label>
           <span className="field-label"><PackageOpen size={14} /> Load weight</span>
