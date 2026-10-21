@@ -15,6 +15,11 @@ HaulSafe is a weather-aware route planner for commercial drivers. It compares th
 
 No API keys are required for local development.
 
+## Live application
+
+- Application: [haulsafe-phi.vercel.app](https://haulsafe-phi.vercel.app/)
+- API health: [haulsafe-api.vercel.app/api/health/](https://haulsafe-api.vercel.app/api/health/)
+
 ## Architecture
 
 ```text
