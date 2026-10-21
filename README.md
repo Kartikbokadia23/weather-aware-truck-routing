@@ -1,11 +1,130 @@
 # HaulSafe
 
-Weather-aware route planning for commercial drivers. The application compares three road routes, samples forecast conditions along each route at the truck's estimated arrival time, applies load-sensitive safety rules, and recommends the safest option before considering travel time.
+HaulSafe is a weather-aware route planner for commercial drivers. It compares three road routes, samples forecast conditions at fixed mileage intervals using the truck's estimated arrival time, applies load-sensitive safety rules, and recommends the safest route before considering travel time.
 
-## Structure
+## What it does
 
-- `backend/` - Django REST API and routing/weather/risk domain logic
-- `frontend/` - React, TypeScript, Vite, Tailwind, and MapLibre operator interface
+- Geocodes origin and destination through OpenStreetMap Nominatim.
+- Retrieves three road alternatives from OSRM. When OSRM returns fewer than three alternatives, it requests additional routed corridors through modest perpendicular waypoints.
+- Samples the route geometry every 10, 25, or 50 miles, including both endpoints.
+- Fetches hourly wind, rain, and snowfall from Open-Meteo for every checkpoint.
+- Matches the forecast hour nearest each checkpoint's ETA.
+- Applies the supplied weather thresholds and load-specific wind overrides.
+- Ranks routes lexicographically by severe miles, high miles, average risk, then duration.
+- Renders all routes, risk-coded checkpoints, ETA/weather popovers, route summaries, and a 0-48 hour corridor heatmap.
 
-Detailed setup, API notes, architecture decisions, and deployment instructions will be completed with the implementation.
+No API keys are required for local development.
+
+## Architecture
+
+```text
+React + TypeScript                  Django
+┌─────────────────────┐           ┌──────────────────────────┐
+│ Search + trip form  │  /api     │ validation + orchestration│
+│ route comparison    ├──────────►│                          │
+│ MapLibre map        │           │ OSRM      Nominatim      │
+│ forecast heatmap    │◄──────────┤ Open-Meteo risk engine   │
+└─────────────────────┘           └──────────────────────────┘
+```
+
+The API is stateless. Provider HTTP code lives under `backend/routing/services`; risk, sampling, summarization, and recommendation rules live in `backend/routing/domain.py`. This keeps external integration changes separate from safety logic.
+
+## Local setup
+
+Requirements: Python 3.11+ and pnpm 10+.
+
+```bash
+git clone https://github.com/Kartikbokadia23/weather-aware-truck-routing.git
+cd weather-aware-truck-routing
+
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r backend/requirements-dev.txt
+python backend/manage.py runserver
+```
+
+In a second terminal:
+
+```bash
+cd frontend
+pnpm install
+pnpm dev
+```
+
+Open `http://localhost:5173`. Vite proxies `/api` to Django at `http://127.0.0.1:8000`.
+
+## API
+
+### `GET /api/geocode/?q=New+York`
+
+Returns up to five matching US/Canadian places.
+
+### `POST /api/routes/plan/`
+
+```json
+{
+  "origin": { "latitude": 40.7128, "longitude": -74.006 },
+  "destination": { "latitude": 39.9526, "longitude": -75.1652 },
+  "departure_time": "2026-10-21T08:30:00-04:00",
+  "load_lbs": 34000,
+  "sample_interval_miles": 25
+}
+```
+
+Departure must include a UTC offset and fall within the next 48 hours. Load must be 1-80,000 lb. Trips producing more than 400 checkpoints per route ask the user to select a wider interval instead of silently weakening the requested sampling.
+
+## Risk and recommendation logic
+
+Each checkpoint's risk is the highest of its wind, rain, and snow classifications. Threshold boundaries enter the higher risk band. Load overrides are then applied to wind:
+
+- 55+ mph: No Travel for every load.
+- 45-54 mph and over 30,000 lb: No Travel.
+- 35-44 mph and over 40,000 lb: Severe.
+
+Each checkpoint owns the route miles until the next checkpoint. Route ranking is a tuple, not an opaque weighted score:
+
+```python
+(severe_miles, high_miles, average_risk, duration_minutes)
+```
+
+This preserves the exact priority order in the brief. No-travel miles are included in severe miles because No Travel is more restrictive than Severe; the UI also flags the route explicitly.
+
+## Verification
+
+```bash
+.venv/bin/pytest backend
+.venv/bin/python backend/manage.py check
+
+cd frontend
+pnpm typecheck
+pnpm lint
+pnpm build
+```
+
+The tests cover critical threshold boundaries, both load rules, fixed-distance sampling, segment-mile aggregation, and recommendation precedence. A live integration check was also run against OSRM and Open-Meteo, followed by an end-to-end browser pass.
+
+## Deployment
+
+The repository includes a Render Blueprint for the Django API and Vercel configuration for the Vite application.
+
+Render environment values:
+
+- `ALLOWED_HOSTS`: the Render service hostname
+- `CORS_ALLOWED_ORIGINS`: the Vercel preview/production origin
+- `DJANGO_SECRET_KEY`: generated by Render
+
+If the Render service name differs from `haulsafe-api`, update the destination in `frontend/vercel.json` before deploying the frontend.
+
+## Tradeoffs
+
+- Public demo providers keep setup friction at zero but have rate limits and no SLA. A production version should use contracted routing/weather services, persistent caching, request throttling, and provider observability.
+- Weather values are hourly forecasts matched to the nearest hour; the UI communicates forecast risk, not road-closure authority.
+- OSRM's public demo uses general driving routes rather than truck-specific height, hazmat, axle, or bridge restrictions. HaulSafe must not replace a commercial truck navigation product.
+- Forecast uncertainty increases with horizon. The heatmap is a planning aid, not a dispatch guarantee.
+
+## Data sources
+
+- Road routing and geometry: [OSRM](https://project-osrm.org/)
+- Places and basemap: [OpenStreetMap](https://www.openstreetmap.org/)
+- Forecast weather: [Open-Meteo](https://open-meteo.com/)
 
